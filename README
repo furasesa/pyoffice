@@ -1,0 +1,74 @@
+LOGGING METHOD 1
+
+from os import path
+import logging
+import logging.config
+
+# load config
+log_file_path = path.join(path.dirname(path.abspath(__file__)), 'logger.conf')
+logging.config.fileConfig(log_file_path, disable_existing_loggers=False, )
+
+# create logger
+logger = logging.getLogger(__name__)
+
+# logger.conf
+[loggers]
+keys=root,mainlog
+[handlers]
+keys=consoleHandler,fileHandler
+[formatters]
+keys=fileFormatter,consoleFormatter
+[logger_root]
+level=NOTSET
+handlers=consoleHandler
+[logger_mainlog]
+level=DEBUG
+handlers=consoleHandler,fileHandler
+qualname=mainlog
+propagate=0
+[handler_consoleHandler]
+level=INFO
+class=StreamHandler
+formatter=consoleFormatter
+args=(sys.stdout,)
+[handler_fileHandler]
+level=DEBUG
+class=FileHandler
+formatter=fileFormatter
+args=('debug.log', 'w')
+[formatter_fileFormatter]
+format=%(asctime)-12s %(levelname)-8s %(name)-8s %(message)s
+datefmt=%d-%m %H:%M
+[formatter_consoleFormatter]
+format=%(asctime)-12s %(levelname)-8s %(name)-8s %(message)s
+datefmt=%d-%m %H:%M
+
+# NOTE::
+file 'debug.log' is blank
+
+
+METHOD 2
+# create logger
+logger = logging.getLogger(__name__)
+# handler
+console_handler = logging.StreamHandler()
+file_log_handler = logging.FileHandler('debug.log')
+
+console_handler.setLevel(20)
+file_log_handler.setLevel(10)
+
+# create formatters
+console_formats = logging.Formatter('%(levelname)-8s %(name)-8s ::%(message)s')
+file_log_formats = logging.Formatter('%(asctime)s %(levelname)-12s %(module)-8s : %(funcName)-8s :: %(message)s')
+# file_log_formats = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# another_formats = logging.Formatter('%(levelname)s\t%(module)s\t:: %(funcName)10s : %(message)s')
+
+console_handler.setFormatter(console_formats)
+file_log_handler.setFormatter(file_log_formats)
+
+# add handler to logger class
+logger.addHandler(console_handler)
+logger.addHandler(file_log_handler)
+
+# NOTE::
+__main__ need to set again

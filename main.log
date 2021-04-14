@@ -1,0 +1,5 @@
+14-04 13:03  DEBUG    __main__ appmain  main debug message 10
+14-04 13:03  INFO     __main__ appmain  main info message 20
+14-04 13:03  WARNING  __main__ appmain  main warn message 30
+14-04 13:03  ERROR    __main__ appmain  main error message 40
+14-04 13:03  CRITICAL __main__ appmain  main critical message 50
