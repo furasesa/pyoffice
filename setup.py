@@ -125,7 +125,11 @@ setup(
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
         'pandas>=1.1.5, <1.2.0',
-        'tinydb>=4.4.0, <4.5.0'
+        'tinydb>=4.4.0, <4.5.0',
+        'tinydb-serialization',
+        'cryptography>=3.4.7, <3.5.0',
+        'prompt_toolkit',
+        
         ],
 
     # List additional groups of dependencies here (e.g. development

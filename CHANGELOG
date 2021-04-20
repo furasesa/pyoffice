@@ -1,0 +1,18 @@
+v. 0.0.1
+
+initial dev:
+test db
+test save setting
+
+roadmap:
+local setting (fixed location):
+user    -> load user -> auto login
+        -> encrypted password
+login   -> latest user login
+path    -> db path folder
+
+db location (editable path) (encrypted):
+user.json           -> get user id, role
+vid.json            -> vendor id
+pid.json            -> product id 
+transactions.json   ->
