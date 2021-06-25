@@ -1,2 +1,0 @@
-20-04 16:00  DEBUG    connector database performing login test
-20-04 16:00  DEBUG    connector database [{'login': {'date': datetime.datetime(2021, 4, 20, 16, 0, 57, 464300), 'name': 'furasesa', 'passwd': 'wdqwdqw'}}, {'app': {'path_db': '/home/furasesa/.config/pyoffice/db.json', 'path_setting': '/home/furasesa/.config/pyoffice/setting.json'}}]

@@ -1,0 +1,5 @@
+25-06 17:31  DEBUG    __main__ root     debug
+25-06 17:31  INFO     __main__ root     info
+25-06 17:31  WARNING  __main__ root     warning
+25-06 17:31  ERROR    __main__ root     error
+25-06 17:31  CRITICAL __main__ root     critical
