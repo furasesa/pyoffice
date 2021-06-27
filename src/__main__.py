@@ -1,55 +1,62 @@
 """
 pyoffice: combine sqlite3 and office
-Usage:  pyoffice -h
-        pyoffice --version
-        pyoffice [-vtp] [--gui]
+Usage:
+pyoffice db [-v -p STORAGE -c CONFIG]
 
 Options:
     -h --help       Show this screen
     -v --verbose    verbose
     -V --version    Print version
-    --gui           run gui (future)
-    -t              is test
-    -p              another test
+    -p DBPATH       Database Storage Path
+    -c CONFIG       Path of pyoffice.ini [default: ./]
 """
-
+import platform
+from pathlib import Path
 from docopt import docopt
 import logging.config
-from .logging_config import root_config, LOG_CONFIG
+import configparser
 
-# log = logging.getLogger('__main__')
+from .logging_config import LOG_CONFIG
+from .app_config import config_validation
+
+from .db.main import main
 
 if __name__ == '__main__':
     args = docopt(__doc__, version='pyoffice 0.0.1')
+    os = platform.system()
+    # init class
+    config = configparser.ConfigParser()
     # get docopt config
     is_verbose = args.get('--verbose')
-    is_gui = args.get('--gui')
-    is_t = args.get('-t')
-    is_p = args.get('-p')
+    db_cli = args.get('db')
+    defined_database_path = args.get('-p')
+    defined_config_path = args.get('-c')
 
     # function of args
     verbosity = logging.DEBUG if is_verbose else logging.ERROR
+    # update verbosity level in root config
+    LOG_CONFIG.update({'root': {'handlers': ['console', 'filewritter'], 'level': logging.DEBUG}})
+    logging.config.dictConfig(LOG_CONFIG)
 
     # for test only
-    print(args)
-    print('is verbose:', verbosity)
-    print('is test: ', is_t)
-    print('is p: ', is_p)
+    logging.info(args)
 
-    # update verbosity level in root config
-    root_config.update({'root': {'handlers': ['console', 'filewritter'], 'level': verbosity}})
+    # config validation
+    config = config_validation(config, defined_database_path, defined_config_path)
 
-    # insert all config to logging_config
-    LOG_CONFIG.update(root_config)
-    print(LOG_CONFIG)
+    if os in config:
+        logging.debug(config.sections())
+        logging.info('done')
+    else:
+        logging.error('file config is empty. please use pyoffice db -p DBPATH')
 
-    logging.config.dictConfig(LOG_CONFIG)
-    # test debug config
-
-    logging.debug('debug')
-    logging.info('info')
-    logging.warning('warning')
-    logging.error('error')
-    logging.critical('critical')
-
+    #
+    # # if len(sys.argv) < 2:
+    # #     db = ':memory:'
+    # # else:
+    # #     db = sys.argv[1]
+    #
+    # # main()
+    #
+    #
 

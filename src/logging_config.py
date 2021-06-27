@@ -1,8 +1,8 @@
 import logging
 
-root_config = {
-    'root': {'handlers': ['console', 'filewritter']}
-}
+# root_config = {
+#     'root': {'handlers': ['console', 'filewritter']}
+# }
 
 
 LOG_CONFIG = {

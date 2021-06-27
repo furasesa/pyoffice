@@ -4,10 +4,12 @@ dist/
 *.egg-info/
 *.egg
 *.py[cod]
+*.ini
 __pycache__/
 *.so
 *~
 venv/
+test/
 
 # due to using tox and pytest
 .tox
