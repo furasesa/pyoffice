@@ -7,13 +7,15 @@ from .config import sql_completer, style
 
 
 def main(database):
+    print('Control-D to quit')
+    print('Control-C to retry')
     connection = sqlite3.connect(database)
     session = PromptSession(
         lexer=PygmentsLexer(SqlLexer), completer=sql_completer, style=style)
 
     while True:
         try:
-            text = session.prompt('> ')
+            text = session.prompt('pyoffice> ')
         except KeyboardInterrupt:
             continue  # Control-C pressed. Try again.
         except EOFError:

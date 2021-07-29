@@ -1,13 +1,15 @@
 """
 pyoffice: combine sqlite3 and office
 Usage:
-pyoffice db [-v -p STORAGE -c CONFIG]
+pyoffice -V
+pyoffice db [-vp DBPATH]
+pyoffice db [-vc CONFIG]
 
 Options:
     -h --help       Show this screen
     -v --verbose    verbose
     -V --version    Print version
-    -p DBPATH       Database Storage Path
+    -p DBPATH       Set Database Storage Path and exit
     -c CONFIG       Path of pyoffice.ini [default: ./]
 """
 import platform
@@ -19,7 +21,7 @@ import configparser
 from .logging_config import LOG_CONFIG
 from .app_config import config_validation
 
-from .db.main import main
+from .db.main import main as database
 
 if __name__ == '__main__':
     args = docopt(__doc__, version='pyoffice 0.0.1')
@@ -45,10 +47,17 @@ if __name__ == '__main__':
     config = config_validation(config, defined_database_path, defined_config_path)
 
     if os in config:
-        logging.debug(config.sections())
-        logging.info('done')
+        logging.debug(f'read sections: {config.sections()}')
+        logging.info(f'os info: {os}')
+
     else:
         logging.error('file config is empty. please use pyoffice db -p DBPATH')
+
+    dbpath = Path(str(config[os]['dbpath']))
+    db_file = dbpath / 'pyoffice.db'
+    logging.info(f'load : {db_file}, type: {type(db_file)}')
+
+    database(db_file)
 
     #
     # # if len(sys.argv) < 2:
@@ -59,4 +68,3 @@ if __name__ == '__main__':
     # # main()
     #
     #
-

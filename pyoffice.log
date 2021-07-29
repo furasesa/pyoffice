@@ -1,7 +1,9 @@
-27-06 17:36  INFO     __main__ root     {'--verbose': True,
+29-07 04:47  INFO     __main__ root     {'--verbose': False,
+ '--version': False,
  '-c': './',
  '-p': None,
  'db': True}
-27-06 17:36  INFO     app_config root     use config path: .
-27-06 17:36  DEBUG    __main__ root     ['Linux']
-27-06 17:36  INFO     __main__ root     done
+29-07 04:47  INFO     app_config root     use config path: .
+29-07 04:47  DEBUG    __main__ root     read sections: ['Linux', 'Windows']
+29-07 04:47  INFO     __main__ root     os info: Windows
+29-07 04:47  INFO     __main__ root     load : D:\Cloud\Dropbox\Admin\db\pyoffice.db, type: <class 'pathlib.WindowsPath'>
