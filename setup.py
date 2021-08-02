@@ -119,6 +119,7 @@ setup(
         'prompt_toolkit',
         'docopt',
         'pygments',
+        'rich',
         ],
 
     # List additional groups of dependencies here (e.g. development

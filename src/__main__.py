@@ -3,14 +3,21 @@ pyoffice: combine sqlite3 and office
 Usage:
 pyoffice -V
 pyoffice db [-vp DBPATH]
-pyoffice db [-vc CONFIG]
+pyoffice db [-vc CONFIG] search=<KEYWORD>
+
+arguments:
+    db                  Run Database
+    search=<KEYWORD>    Search Database
 
 Options:
-    -h --help       Show this screen
-    -v --verbose    verbose
-    -V --version    Print version
-    -p DBPATH       Set Database Storage Path and exit
-    -c CONFIG       Path of pyoffice.ini [default: ./]
+    -h --help           Show this screen
+    -v --verbose        verbose
+    -V --version        Print version
+    -p DBPATH           Set Database Storage Path and exit
+    -c CONFIG           Path of pyoffice.ini [default: ./]
+
+DbOptions:
+       Search text in database
 """
 import platform
 from pathlib import Path
@@ -33,6 +40,10 @@ if __name__ == '__main__':
     db_cli = args.get('db')
     defined_database_path = args.get('-p')
     defined_config_path = args.get('-c')
+
+    # Database Options
+    is_Search = args.get('search')
+    s_keyword = args.get('<KEYWORD>')
 
     # function of args
     verbosity = logging.DEBUG if is_verbose else logging.ERROR
