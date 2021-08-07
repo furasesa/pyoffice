@@ -3,21 +3,22 @@ pyoffice: combine sqlite3 and office
 Usage:
 pyoffice -V
 pyoffice db [-vp DBPATH]
-pyoffice db [-vc CONFIG] search=<KEYWORD>
+pyoffice db [-vc CONFIG] (--cli | --search)
 
-arguments:
-    db                  Run Database
-    search=<KEYWORD>    Search Database
+Arguments:
+    db              Run Database
 
 Options:
-    -h --help           Show this screen
-    -v --verbose        verbose
-    -V --version        Print version
-    -p DBPATH           Set Database Storage Path and exit
-    -c CONFIG           Path of pyoffice.ini [default: ./]
+    -h --help       Show this screen
+    -v --verbose    verbose
+    -V --version    Print version
+    -p DBPATH       Set Database Storage Path and exit
+    -c CONFIG       Path of pyoffice.ini [default: ./]
 
-DbOptions:
-       Search text in database
+DbOpts:
+    --cli           Sql cli command
+    --search        Search Keywords
+
 """
 import platform
 from pathlib import Path
@@ -28,7 +29,7 @@ import configparser
 from .logging_config import LOG_CONFIG
 from .app_config import config_validation
 
-from .db.main import main as database
+from .db.main import Database
 
 if __name__ == '__main__':
     args = docopt(__doc__, version='pyoffice 0.0.1')
@@ -37,13 +38,13 @@ if __name__ == '__main__':
     config = configparser.ConfigParser()
     # get docopt config
     is_verbose = args.get('--verbose')
-    db_cli = args.get('db')
+    db = args.get('db')
     defined_database_path = args.get('-p')
     defined_config_path = args.get('-c')
 
     # Database Options
-    is_Search = args.get('search')
-    s_keyword = args.get('<KEYWORD>')
+    db_cli = args.get('--cli')
+    db_search = args.get('--search')
 
     # function of args
     verbosity = logging.DEBUG if is_verbose else logging.ERROR
@@ -68,14 +69,10 @@ if __name__ == '__main__':
     db_file = dbpath / 'pyoffice.db'
     logging.info(f'load : {db_file}, type: {type(db_file)}')
 
-    database(db_file)
+    # init class
+    mdb = Database(db_file)
 
-    #
-    # # if len(sys.argv) < 2:
-    # #     db = ':memory:'
-    # # else:
-    # #     db = sys.argv[1]
-    #
-    # # main()
-    #
-    #
+    if db and db_cli:
+        mdb.cli()
+    elif db and db_search:
+        mdb.search()

@@ -16,3 +16,4 @@ test/
 .cache
 *.log
 *.sql
+*.db
