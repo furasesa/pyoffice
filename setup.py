@@ -159,7 +159,7 @@ setup(
     # executes the function `main` from this package when invoked:
     entry_points={  # Optional
         'console_scripts': [
-            'pyoffice=__main__:main',
+            'pyoffice=pyoffice.__main__:main',
         ],
     },
 

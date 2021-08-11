@@ -22,11 +22,24 @@ sql_completer = WordCompleter([
     'vacuum', 'values', 'view', 'virtual', 'when', 'where', 'with',
     'without'], ignore_case=True)
 
+basic_command = WordCompleter([
+    'help', 'list'], ignore_case=True)
+
 style = Style.from_dict({
     'completion-menu.completion': 'bg:#008888 #ffffff',
     'completion-menu.completion.current': 'bg:#00aaaa #000000',
     'scrollbar.background': 'bg:#88aaaa',
     'scrollbar.button': 'bg:#222222',
 })
+
+
+def row_filter(result):
+    row_container = ()
+    for x in result:
+        if type(x) == int:
+            row_container = (*row_container, f'{x:n}')
+        else:
+            row_container = (*row_container, f'{x}')
+    return row_container
 
 
