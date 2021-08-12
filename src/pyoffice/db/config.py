@@ -1,6 +1,8 @@
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.styles import Style
 
+import logging
+
 sql_completer = WordCompleter([
     'abort', 'action', 'add', 'after', 'all', 'alter', 'analyze', 'and',
     'as', 'asc', 'attach', 'autoincrement', 'before', 'begin', 'between',
@@ -33,13 +35,24 @@ style = Style.from_dict({
 })
 
 
-def row_filter(result):
-    row_container = ()
-    for x in result:
-        if type(x) == int:
-            row_container = (*row_container, f'{x:n}')
+def row_filter(table, query_result):
+    for result in query_result:
+        row_container = ()
+        # logging.debug(f'query result: {result}')
+        for x in result:
+            if type(x) == int:
+                row_container = (*row_container, f'{x:n}')
+            else:
+                row_container = (*row_container, f'{x}')
+        logging.debug(f'add row to table: {row_container}')
+        table.add_row(*row_container)
+
+
+def col_filter(table, column_list):
+    for col in column_list:
+        if col == 'price' or col == 'amount':
+            table.add_column(col, justify='right')
         else:
-            row_container = (*row_container, f'{x}')
-    return row_container
+            table.add_column(col)
 
 

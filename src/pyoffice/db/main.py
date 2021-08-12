@@ -4,8 +4,7 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter, merge_completers
 from prompt_toolkit.lexers import PygmentsLexer
 from pygments.lexers.sql import SqlLexer
-from .config import sql_completer, style, basic_command
-from .config import row_filter
+
 
 
 from rich import print
@@ -22,6 +21,10 @@ from rich.syntax import Syntax
 import logging
 locale.setlocale(locale.LC_ALL, '')
 
+from .config import sql_completer, style, basic_command
+from .config import row_filter, col_filter
+from .commands import cmd_parse
+
 
 class Database:
     def __init__(self, database, config):
@@ -30,33 +33,19 @@ class Database:
         self.console = Console()
         self.cursor = self.connection.cursor()
         self.database_completer = []
+        self.table_list = []
 
-        # fixed table
-        self.tbl_table = Table(show_header=True, header_style="bold magenta")
-        self.tbl_table.add_column('Tables')
-        self.tbl_table.add_column('Description')
-        print('[bold]get table list[/bold]')
+        # read config
+        # Completer
+        if 'Completer' in config:
+            col = config['Completer']['col'].split(',')
+            tbl = config['Completer']['tbl'].split(',')
+            gen_data = (self.get_cursor_data(f'SELECT {c} FROM {t}') for c in col for t in tbl)
+            for x in gen_data:
+                self.database_completer += x
+            logging.debug(f'Completer from config: {self.database_completer}')
 
-        with self.connection:
-            self.table_list = self.get_cursor_data('SELECT name FROM sqlite_master WHERE type=\'table\'')
-            for tbl in self.table_list:
-                table_des = self.get_cursor_description(f'SELECT * FROM {tbl}')
-                # for printing
-                self.tbl_table.add_row(tbl, str(table_des))
-            self.print_table()
-            # read config
-            # Completer
-            if 'Completer' in config:
-                col = config['Completer']['col'].split(',')
-                tbl = config['Completer']['tbl'].split(',')
-                gen_data = (self.get_cursor_data(f'SELECT {c} FROM {t}') for c in col for t in tbl)
-                for x in gen_data:
-                    self.database_completer += x
-                logging.debug(f'Completer from config: {self.database_completer}')
         logging.debug(f'end init')
-
-    def print_table(self):
-        self.console.print(self.tbl_table)
 
     def get_cursor_raw(self, args):
         try:
@@ -83,6 +72,19 @@ class Database:
             return des_lst
         except Exception as e:
             logging.error(repr(f'Error occurs: {e}'))
+
+    def print_table(self):
+        tbl = Table(show_header=True, header_style="bold magenta")
+        tbl.add_column('Tables')
+        tbl.add_column('Description')
+        print('[bold]get table list[/bold]')
+        self.table_list = self.get_cursor_data('SELECT name FROM sqlite_master WHERE type=\'table\'')
+        for table in self.table_list:
+            table_des = self.get_cursor_description(f'SELECT * FROM {table}')
+            tbl.add_row(table, str(table_des))
+
+        self.console.print(tbl)
+        return self.table_list
 
     def cli(self):
         self.session = PromptSession(
@@ -111,6 +113,7 @@ class Database:
         print('[bold red]GoodBye![/bold red]')
 
     def search(self):
+        self.print_table()
         table_list = WordCompleter(self.table_list, ignore_case=True)
         in_db_data = WordCompleter(self.database_completer, ignore_case=True)
         search_completer = merge_completers([basic_command, table_list, in_db_data])
@@ -127,7 +130,6 @@ class Database:
                     print('[bold]command: <table> <col> <keyword>')
                     continue
                 elif cmd_array[0] == 'list':
-                    logging.info('print table list')
                     self.print_table()
                     continue
                 else:
@@ -142,92 +144,83 @@ class Database:
             except EOFError:
                 break  # Control-D pressed.
 
-            search_des = self.get_cursor_description(f'SELECT * FROM {s_table}')
-            for des in search_des:
-                tbl.add_column(des)
-
+            col_list = self.get_cursor_description(f'SELECT * FROM {s_table}')
             search_result = self.get_cursor_raw(f'SELECT * '
                                                 f'FROM {s_table} '
                                                 f'WHERE {s_key} '
                                                 f'LIKE \'%{s_string}%\'')
 
-            for result in search_result:
-                logging.debug(f'search result: {result}')
-                # because of locale
-                row_container = ()
-                for x in result:
-                    if type(x) == int:
-                        row_container = (*row_container, f'{x:n}')
-                    else:
-                        row_container = (*row_container, f'{x}')
-                # logging.debug(f'add {row_container}')
-                # row_container = (str(x) for x in result)  # force elements to string
-                tbl.add_row(*row_container)
+            col_filter(tbl, col_list)
+            row_filter(tbl, search_result)
+
             self.console.print(tbl)
         print('[bold red]GoodBye![/bold red]')
 
-    def query(self, query_dictionary, column, q_filter):
-        query_list = query_dictionary.keys()
-        query_cmd = WordCompleter(query_dictionary.keys())
-        filter_list = []
-        if q_filter is not None:
-            for f in q_filter:
-                sel = f.split('.')
-                filter_list += self.get_cursor_data(f'SELECT {sel[1]} FROM {sel[0]};')
+    def query(self, query_dictionary):
+        # building WordCompleter
+        query_list = query_dictionary.keys()  # look in config['Query']['list']
+        where_key = []
+        equation = []
+        print(f'dict keys: {query_dictionary.keys()}')
+        for k, v in query_dictionary.items():
+            print(f'k: {k}, v: {v}')
+            if 'filter' in v:
+                print(f"filter found: {v['filter']}")
+                where_key += v['filter']
+                for vv in v['filter']:
+                    val = vv.split('.')
+                    equation += self.get_cursor_data(f"SELECT {val[1]} FROM {val[0]};")
 
-        filter_cmd = WordCompleter(filter_list)
         logging.debug(f'query list: {query_list}')
-        filter_tbl = WordCompleter(q_filter)
-        query_completer = merge_completers([basic_command, query_cmd, filter_tbl, filter_cmd])
+        logging.debug(f'where: {where_key}')
+        logging.debug(f'equal: {equation}')
+
+        query_cmd = WordCompleter(query_list)
+        where_cmd = WordCompleter(where_key)
+        equation_cmd = WordCompleter(equation)
+
+        query_completer = merge_completers([basic_command, query_cmd, where_cmd, equation_cmd])
         self.session = PromptSession(
             lexer=PygmentsLexer(SqlLexer), completer=query_completer, style=style)
         while True:
             try:
                 tbl = Table(show_header=True, header_style="bold magenta")
-                cmd = self.session.prompt('query> ')
-                cmd_array = cmd.split(' ')
-                if cmd_array[0] == 'help':
-                    print('[bold red]Control-D to quit[/bold red]')
-                    print('[bold red]Control-C to retry[/bold red]')
-                    print(f'[bold]query list: {query_list} project.id {filter_list}')
+                cmd = [x for x in self.session.prompt('query> ').split()]
+                # build command dictionary
+                cmd_valid = {
+                    'query': query_list,
+                    'filter': where_key,
+                    'filter_name': equation
+                }
+                valid_cmd = cmd_parse('query', cmd, cmd_valid)
+                if valid_cmd == 1:
                     continue
-                elif cmd_array[0] == 'list':
-                    logging.info('print table list')
-                    self.print_table()
-                    continue
-                else:
-                    s_query = cmd_array[0]
-                    s_filter = None
-                    s_str = None
-                    if len(cmd_array) > 1:
-                        s_filter = cmd_array[1]
-                        s_str = cmd_array[2]
-                    if s_query not in query_list:
-                        logging.error(f'{s_query} not in {query_list}')
-                # logging.debug(f'execute: {cmd}')
+                try:
+                    search_str = f"{query_dictionary[valid_cmd['query']]['query']} " \
+                                 f"WHERE {valid_cmd['filter']} = \'{valid_cmd['filter_name']}\';"
+                    logging.debug(f"using filter: {valid_cmd['filter']} filter name: {valid_cmd['filter_name']}")
+                except KeyError:
+                    try:
+                        search_str = f"{query_dictionary[valid_cmd['query']]['query']};"
+                    except KeyError:
+                        raise ValueError(f'Query {query_list} please use one of them')
+
+                logging.debug(f'search string: {search_str}')
+                query_result = self.get_cursor_raw(search_str) if search_str is not None \
+                    else ValueError('Query String is None')
+
             except KeyboardInterrupt:
                 continue  # Control-C pressed. Try again.
             except EOFError:
                 break  # Control-D pressed.
 
-            if s_filter is not None:
-                search_str = f'{query_dictionary.get(s_query)} WHERE {s_filter} = \'{s_str}\';'
-            else:
-                search_str = query_dictionary.get(s_query)
-            query_result = self.get_cursor_raw(search_str)
-            if column is not None:
-                for col in column:
-                    if col == 'price' or col == 'amount':
-                        tbl.add_column(col, justify='right')
-                    else:
-                        tbl.add_column(col)
+            query_used = valid_cmd['query']
+            column = query_dictionary[query_used]['column']
+            logging.debug(f'column list: {column}')
 
-            for result in query_result:
-                logging.debug(f'query result: {result}')
-                row_container = row_filter(result)
-                tbl.add_row(*row_container)
+            col_filter(tbl, column)
+            row_filter(tbl, query_result)
             self.console.print(tbl)
-
         print('[bold red]GoodBye![/bold red]')
 
 
