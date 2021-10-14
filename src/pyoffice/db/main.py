@@ -5,8 +5,6 @@ from prompt_toolkit.completion import WordCompleter, merge_completers
 from prompt_toolkit.lexers import PygmentsLexer
 from pygments.lexers.sql import SqlLexer
 
-
-
 from rich import print
 from rich.console import Console
 from rich.table import Table
@@ -27,27 +25,26 @@ from .commands import cmd_parse
 
 
 class Database:
-    def __init__(self, database, config):
+    def __init__(self, database):
         self.connection = sqlite3.connect(database)
         self.session = None
         self.console = Console()
         self.cursor = self.connection.cursor()
-        self.database_completer = []
+
         self.table_list = []
 
         # read config
         # Completer
-        if 'Completer' in config:
-            col = config['Completer']['col'].split(',')
-            tbl = config['Completer']['tbl'].split(',')
-            gen_data = (self.get_cursor_data(f'SELECT {c} FROM {t}') for c in col for t in tbl)
-            for x in gen_data:
-                self.database_completer += x
-            logging.debug(f'Completer from config: {self.database_completer}')
+
 
         logging.debug(f'end init')
 
     def get_cursor_raw(self, args):
+        """
+        @brief SELECT * FROM <table>
+        @return cursor
+        @extract using loop
+        """
         try:
             a = self.cursor.execute(args)
             logging.debug(f'get_cursor_raw: {a}')
@@ -56,6 +53,12 @@ class Database:
             logging.error(repr(f'Error occurs: {e}'))
 
     def get_cursor_data(self, args) -> list:
+        """
+        @brief SELECT <col> from <table>. do not use *
+        @Example:
+        SELECT name from lt;
+        @return list
+        """
         try:
             a = self.cursor.execute(args)
             lst_a = list(map(lambda x: x[0], a))
@@ -65,6 +68,10 @@ class Database:
             logging.error(repr(f'Error occurs: {e}'))
 
     def get_cursor_description(self, args) -> list:
+        """
+        @brief: SELECT * from <table>;
+        @return column list
+        """
         try:
             a = self.cursor.execute(args)
             des_lst = list(map(lambda x: x[0], a.description))
@@ -112,10 +119,19 @@ class Database:
 
         print('[bold red]GoodBye![/bold red]')
 
-    def search(self):
+    def search(self, config):
         self.print_table()
+        database_completer = []
+        if 'Completer' in config:
+            col = config['Completer']['col'].split(',')
+            tbl = config['Completer']['tbl'].split(',')
+            gen_data = (self.get_cursor_data(f'SELECT {c} FROM {t}') for c in col for t in tbl)
+            for x in gen_data:
+                database_completer += x
+            logging.debug(f'Completer from config: {database_completer}')
+
         table_list = WordCompleter(self.table_list, ignore_case=True)
-        in_db_data = WordCompleter(self.database_completer, ignore_case=True)
+        in_db_data = WordCompleter(database_completer, ignore_case=True)
         search_completer = merge_completers([basic_command, table_list, in_db_data])
         self.session = PromptSession(
             lexer=PygmentsLexer(SqlLexer), completer=search_completer, style=style)

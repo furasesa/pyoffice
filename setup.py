@@ -116,10 +116,10 @@ setup(
         # 'tinydb',
         # 'tinydb-serialization',
         # 'cryptography>=3.4.7, <3.5.0',
-        'prompt_toolkit',
-        'docopt',
-        'pygments',
-        'rich',
+        'prompt_toolkit==3.0.20',
+        'docopt==0.6.2',
+        'pygments==2.10.0',
+        'rich==10.11.0',
         ],
 
     # List additional groups of dependencies here (e.g. development
@@ -159,7 +159,7 @@ setup(
     # executes the function `main` from this package when invoked:
     entry_points={  # Optional
         'console_scripts': [
-            'pyoffice=pyoffice.__main__:main',
+            'pyoffice=pyoffice:main',
         ],
     },
 
